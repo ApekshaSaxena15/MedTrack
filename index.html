@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MedTrack</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.1.1/tesseract.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light;--bg:#eef3f2;--card:#fff;--ink:#0f2429;--mut:#51666b;--line:#d5e0df;--teal:#0b6b6b;--tealbg:#d9efec;--red:#b8402a;--redbg:#fbe3dd;--amb:#8a5a00;--ambbg:#fcefc9;--grn:#1d6b3a;--grnbg:#d8f0de}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#0d1a1d;--card:#15262a;--ink:#e8f1f1;--mut:#9db3b6;--line:#27414500;--line:#2a4448;--teal:#4cc3bd;--tealbg:#143c3d;--red:#ff9a85;--redbg:#44201a;--amb:#f2c35a;--ambbg:#3f3213;--grn:#7fdc9b;--grnbg:#16381f}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#0d1a1d;--card:#15262a;--ink:#e8f1f1;--mut:#9db3b6;--line:#2a4448;--teal:#4cc3bd;--tealbg:#143c3d;--red:#ff9a85;--redbg:#44201a;--amb:#f2c35a;--ambbg:#3f3213;--grn:#7fdc9b;--grnbg:#16381f}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 "Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif}
+header{padding:18px 20px 6px;max-width:1000px;margin:auto}
+h1{margin:0;font-size:28px;letter-spacing:-.5px}h1 span{color:var(--teal)}
+header p{margin:2px 0 0;color:var(--mut)}
+nav{display:flex;gap:6px;max-width:1000px;margin:12px auto 0;padding:0 20px;overflow-x:auto}
+nav button{flex:none;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:10px 16px;border-radius:999px;font:inherit;font-weight:600;cursor:pointer}
+nav button.on{background:var(--teal);color:#fff;border-color:var(--teal)}
+:root[data-theme="dark"] nav button.on,:root:not([data-theme="light"]) nav button.on{color:#06201f}
+main{max-width:1000px;margin:auto;padding:16px 20px 60px}
+.tab{display:none}.tab.on{display:block}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px}
+h2{font-size:18px;margin:0 0 10px}
+.grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+.stat b{display:block;font-size:30px;line-height:1.1}.stat span{color:var(--mut);font-size:14px}
+.demo{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:var(--tealbg);border-radius:12px;padding:10px 12px;margin-bottom:14px;font-size:14px}
+.demo b{margin-right:4px}
+button.b,.demo button{border:1px solid var(--teal);background:var(--card);color:var(--teal);padding:8px 12px;border-radius:9px;font:inherit;font-weight:600;cursor:pointer}
+button.p{background:var(--teal);color:#fff}
+:root[data-theme="dark"] button.p,:root:not([data-theme="light"]) button.p{color:#06201f}
+.tw{overflow-x:auto}table{border-collapse:collapse;width:100%;min-width:480px}
+th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line);font-size:15px}th{color:var(--mut);font-weight:600}
+.tag{display:inline-block;padding:2px 10px;border-radius:99px;font-size:13px;font-weight:700}
+.ok{background:var(--grnbg);color:var(--grn)}.warn{background:var(--ambbg);color:var(--amb)}.bad{background:var(--redbg);color:var(--red)}
+.al{padding:10px 12px;border-left:4px solid var(--line);margin-bottom:8px;background:var(--bg);border-radius:0 9px 9px 0;font-size:15px}
+.al.missed,.al.expired{border-color:var(--red)}.al.expiring,.al.late{border-color:var(--amb)}.al.info{border-color:var(--teal)}
+.al small{display:block;color:var(--mut)}
+input,textarea,select{font:inherit;padding:9px;border:1px solid var(--line);border-radius:9px;background:var(--card);color:var(--ink);width:100%}
+label{display:block;font-weight:600;margin:10px 0 4px;font-size:14px}
+.row{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}
+.chips button{margin:4px 6px 0 0;font-size:13px;padding:4px 10px;border-radius:99px;border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer}
+#prev{max-width:240px;max-height:200px;border-radius:10px;display:none;margin-top:8px}
+/* elder */
+.elder{text-align:center;padding:26px 14px}
+.elder .big{width:100%;max-width:520px;min-height:200px;border:0;border-radius:28px;background:var(--teal);color:#fff;font-size:34px;font-weight:800;cursor:pointer;padding:20px}
+:root[data-theme="dark"] .elder .big,:root:not([data-theme="light"]) .elder .big{color:#06201f}
+.elder .big.wait{background:var(--line);color:var(--mut);cursor:default}
+.elder h3{font-size:30px;margin:0 0 6px}.elder p{font-size:20px;color:var(--mut);margin:6px 0 18px}
+.pulse{animation:pl 1.2s infinite}@keyframes pl{50%{transform:scale(1.03)}}
+@media(prefers-reduced-motion:reduce){.pulse{animation:none}}
+/* box */
+.box{width:260px;margin:10px auto;position:relative}
+.lid{height:34px;background:var(--teal);border-radius:12px 12px 0 0;transform-origin:left bottom;transition:transform .3s}
+.lid.open{transform:rotate(-28deg)}
+.tray{height:90px;background:var(--tealbg);border:3px solid var(--teal);border-radius:0 0 12px 12px;display:flex;gap:6px;padding:8px}
+.tray i{flex:1;border-radius:8px;background:var(--card);border:1px solid var(--line)}
+.led{display:inline-block;width:12px;height:12px;border-radius:50%;background:var(--line);margin-right:6px;vertical-align:middle}.led.on{background:var(--red)}
+code{background:var(--bg);padding:2px 6px;border-radius:6px;font-size:13px;word-break:break-all}
+.theme{float:right;margin-top:-34px}
+</style></head><body>
+<header><h1>Med<span>Track</span></h1><p>Never miss a dose. Never keep an expired pill.</p>
+<button class="b theme" onclick="theme()" aria-label="Switch light or dark">Light/Dark</button></header>
+<nav id="nav">
+<button data-t="fam" class="on">Family dashboard</button><button data-t="eld">Elder screen</button><button data-t="scan">Scan expiry</button><button data-t="box">Smart pill box</button><button data-t="emg">Emergency card</button></nav>
+<main>
+<div class="demo"><b>Demo clock</b><span id="clock"></span>
+<button onclick="dueNow()">Make a dose due now</button><button onclick="skip(30)">Skip 30 min</button><button onclick="resetAll()">Reset demo</button></div>
+
+<section class="tab on" id="fam"></section>
+<section class="tab" id="eld"></section>
+
+<section class="tab" id="scan">
+<div class="card"><h2>1. Photograph the strip</h2>
+<input type="file" id="file" accept="image/*" capture="environment">
+<img id="prev" alt="Medicine strip preview"><div id="ocrmsg" style="color:var(--mut);margin-top:6px"></div>
+<label for="txt">Text read from the strip (edit if the scan slipped)</label>
+<textarea id="txt" rows="3" placeholder="e.g. MFG 01/24 EXP 08/2027"></textarea>
+<div class="chips">Try a sample:
+<button onclick="samp('EXP 08/2027')">EXP 08/2027</button><button onclick="samp('Exp. AUG 2O27')">Exp. AUG 2O27</button><button onclick="samp('MFG 01/24 EXP I2/26')">MFG 01/24 EXP I2/26</button><button onclick="samp('EXP 03-2025')">EXP 03-2025 (expired)</button></div>
+<p><button class="b p" onclick="parseTxt()">Read expiry date</button></p></div>
+<div class="card" id="confirm" style="display:none"><h2>2. Confirm the date</h2>
+<p id="cmsg" style="margin-top:0;color:var(--mut)"></p>
+<div class="row"><div><label for="mn">Medicine name</label><input id="mn" placeholder="e.g. Amlodipine 5 mg"></div>
+<div><label for="me">Expiry (month)</label><input id="me" type="month"></div>
+<div><label for="mt">Dose times (comma separated)</label><input id="mt" value="08:00, 20:00"></div><div><label for="ml">Tablets in the pack</label><input id="ml" type="number" min="0" value="10"></div></div>
+<p><button class="b p" onclick="addMed()">Confirm and add medicine</button></p></div>
+</section>
+
+<section class="tab" id="emg"></section>
+<section class="tab" id="box"></section>
+</main>
+<script>
+const $=s=>document.querySelector(s),pad=n=>String(n).padStart(2,'0');
+const fresh=()=>({meds:[],doses:[],alerts:[],off:0,since:Date.now(),lid:false,consent:true,fam:{n:'Riya (daughter)',p:'+91 98xxxxxx10'},id:10,prof:{n:'Savitri Devi',age:'72',blood:'B+',all:'Penicillin',cond:'High blood pressure, Type 2 diabetes',doc:'Dr. Sharma, 98xxxxxx20',emg:'Riya (daughter), +91 98xxxxxx10',notes:''}});
+let S;try{S=JSON.parse(localStorage.getItem('mt2'))}catch(e){}
+if(!S){S=fresh();seed()}S.prof=S.prof||fresh().prof;
+function seed(){S.meds=[{id:1,name:'Amlodipine 5 mg',exp:'2027-03',times:['08:00','20:00'],left:9},{id:2,name:'Metformin 500 mg',exp:'2025-12',times:['09:00'],left:20},{id:3,name:'Vitamin D3',exp:'2026-12',times:['13:00'],left:30}]}
+function save(){try{localStorage.setItem('mt2',JSON.stringify(S))}catch(e){}}
+const now=()=>Date.now()+S.off;
+const tm=ms=>new Date(ms).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+function status(m){const [y,mo]=m.exp.split('-').map(Number);const end=new Date(y,mo,0,23,59).getTime();const d=(end-now())/864e5;return d<0?'expired':d<=60?'expiring':'ok'}
+function alert_(type,msg,sms){S.alerts.unshift({t:now(),type,msg,sms:!!sms});S.alerts=S.alerts.slice(0,40)}
+/* backend loop: creates due doses, flags missed, checks expiry */
+function tick(){
+ const d=new Date(now());
+ S.meds.forEach(m=>{
+  const st=status(m);
+  if(st!=='ok'&&m.flag!==st){m.flag=st;alert_(st,st==='expired'?`${m.name} has expired. Please discard it.`:`${m.name} expires soon (${m.exp}).`,true)}
+  if(st==='expired')return;
+  if(m.left!=null){const dl=m.left/m.times.length;if(dl<=5&&!m.rf){m.rf=1;alert_('expiring',m.left>0?`${m.name}: ${m.left} tablets left, about ${Math.floor(dl)} days. Please restock.`:`${m.name}: no tablets left. Please restock now.`,true)}if(dl>5)m.rf=0}
+  m.times.forEach(t=>{const [h,mi]=t.split(':').map(Number);const at=new Date(d.getFullYear(),d.getMonth(),d.getDate(),h,mi).getTime();
+   const key=m.id+'@'+at;
+   if(at<=now()&&at>=S.since&&!S.doses.find(x=>x.key===key))S.doses.push({key,mid:m.id,name:m.name,at,st:'pending'})})});
+ S.doses.forEach(x=>{if(x.st==='pending'&&now()-x.at>=30*6e4){x.st='missed';alert_('missed',`${x.name} due at ${tm(x.at)} was not taken. No lid opening or tap in 30 minutes.`,true)}});
+}
+function take(key,via){const x=S.doses.find(d=>d.key===key);if(!x||x.st==='taken'||x.st==='late')return;
+ const was=x.st;x.st=was==='missed'?'late':'taken';x.via=via;x.tk=now();const md=S.meds.find(m=>m.id===x.mid);if(md&&md.left!=null){md.left=Math.max(0,md.left-1);tick()}
+ if(was==='missed')alert_('late',`${x.name} was taken late at ${tm(now())}.`,true);
+ else alert_('info',`${x.name} taken at ${tm(now())} (${via==='lid'?'lid opened, likely taken':'tapped by elder'}).`);save();render()}
+const due=()=>S.doses.filter(x=>x.st==='pending'||x.st==='missed').sort((a,b)=>a.at-b.at);
+function lid(){S.lid=!S.lid;if(S.lid){const x=S.doses.filter(d=>d.st==='pending').sort((a,b)=>a.at-b.at)[0];
+ if(x)take(x.key,'lid');else{alert_('info','Lid opened, but no dose was due.')}}save();render()}
+function dueNow(){const m=S.meds.find(m=>status(m)!=='expired');if(!m)return;const k='demo'+Date.now();S.doses.push({key:k,mid:m.id,name:m.name,at:now(),st:'pending'});save();render()}
+function skip(min){S.off+=min*6e4;tick();save();render()}
+function resetAll(){S=fresh();seed();save();render()}
+/* expiry date reader: MM/YY, MM/YYYY, AUG 2027, OCR slips */
+function readExpiry(raw){
+ let t=raw.toUpperCase().replace(/(?<=[\dA-Z])O(?=\d)|(?<=\d)O/g,'0').replace(/(?<=\d)[IL](?=\d)|\b[IL](?=\d)|(?<=\d)[IL]\b/g,'1');
+ const M=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];const f=[];
+ const yy=y=>{y=+y;return y<100?2000+y:y};
+ let r,a=/(\d{1,2})\s*[\/\-.]\s*(\d{2,4})/g;
+ while(r=a.exec(t)){if(+r[1]>=1&&+r[1]<=12)f.push({m:+r[1],y:yy(r[2]),i:r.index})}
+ a=/(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)[A-Z]*[\s.,\-\/]*(\d{2,4})/g;
+ while(r=a.exec(t))f.push({m:M.indexOf(r[1])+1,y:yy(r[2]),i:r.index});
+ if(!f.length)return null;
+ const e=t.indexOf('EXP');let pick;
+ if(e>=0){pick=f.filter(x=>x.i>=e).sort((a,b)=>a.i-b.i)[0]}
+ if(!pick)pick=f.sort((a,b)=>(b.y*12+b.m)-(a.y*12+a.m))[0];
+ return pick&&{...pick,viaExp:e>=0}}
+function samp(s){$('#txt').value=s;parseTxt()}
+function parseTxt(){const r=readExpiry($('#txt').value);$('#confirm').style.display='block';
+ if(!r){$('#cmsg').textContent='No date found. Type the expiry month below.';$('#me').value='';return}
+ $('#me').value=r.y+'-'+pad(r.m);
+ $('#cmsg').textContent=`Read: ${pad(r.m)}/${r.y}. Check it against the strip before you confirm.`}
+function addMed(){const n=$('#mn').value.trim(),e=$('#me').value;if(!n||!e){alert('Enter the medicine name and expiry month.');return}
+ const times=$('#mt').value.split(',').map(s=>s.trim()).filter(s=>/^\d{1,2}:\d{2}$/.test(s)).map(s=>{const[a,b]=s.split(':');return pad(a)+':'+b});
+ S.meds.push({id:S.id++,name:n,exp:e,times:times.length?times:['08:00'],left:$('#ml').value===''?null:Math.max(0,+$('#ml').value)});tick();save();render();
+ $('#confirm').style.display='none';$('#mn').value='';$('#txt').value='';go('fam')}
+$('#file').onchange=async ev=>{const f=ev.target.files[0];if(!f)return;const p=$('#prev');p.src=URL.createObjectURL(f);p.style.display='block';
+ const msg=$('#ocrmsg');
+ if(!window.Tesseract){msg.textContent='The OCR engine could not load here. Type what the strip says in the box below.';return}
+ msg.textContent='Reading the strip...';
+ try{const r=await Tesseract.recognize(f,'eng');$('#txt').value=r.data.text;msg.textContent='Done. Check the text, then read the date.';parseTxt()}
+ catch(e){msg.textContent='Could not read the photo in this browser. Type what the strip says below.'}};
+/* views */
+function render(){
+ $('#clock').textContent=new Date(now()).toLocaleString([], {weekday:'short',hour:'2-digit',minute:'2-digit'});
+ const fin=S.doses.filter(x=>x.st!=='pending'),good=fin.filter(x=>x.st==='taken'||x.st==='late').length;
+ const ad=fin.length?Math.round(good/fin.length*100)+'%':'No data yet';
+ const miss=S.doses.filter(x=>x.st==='missed'||x.st==='late').length;
+ const bad=S.meds.filter(m=>status(m)!=='ok').length;
+ const tg={ok:['ok','Good'],expiring:['warn','Expiring soon'],expired:['bad','Expired']};
+ $('#fam').innerHTML=`<div class="grid"><div class="card stat"><b>${ad}</b><span>Doses taken on time or late</span></div>
+ <div class="card stat"><b>${miss}</b><span>Missed or late doses</span></div><div class="card stat"><b>${bad}</b><span>Medicines expired or expiring</span></div></div>
+ <div class="card"><h2>Medicines</h2><div class="tw"><table><tr><th>Name</th><th>Expiry</th><th>Doses</th><th>Tablets left</th><th>Status</th><th></th></tr>
+ ${S.meds.map(m=>`<tr><td>${esc(m.name)}</td><td>${m.exp}</td><td>${m.times.join(', ')}</td><td><input type="number" min="0" aria-label="Tablets left" style="width:72px" value="${m.left??''}" onchange="setLeft(${m.id},this.value)"><small style="display:block;color:var(--mut)">${m.left!=null?'about '+(Math.floor(m.left/m.times.length*10)/10)+' days':''}</small></td><td><span class="tag ${tg[status(m)][0]}">${tg[status(m)][1]}</span></td><td><button class="b" onclick="del(${m.id})">Remove</button></td></tr>`).join('')||'<tr><td colspan=6>No medicines yet. Use Scan expiry to add one.</td></tr>'}</table></div></div>
+ <div class="card"><h2>Alerts to ${esc(S.fam.n)}</h2>${S.alerts.map(a=>`<div class="al ${a.type}">${esc(a.msg)}<small>${tm(a.t)}${a.sms?' · SMS sent to '+esc(S.fam.p):' · shown on dashboard'}</small></div>`).join('')||'<p style="color:var(--mut)">No alerts yet. Use the demo buttons above to see one.</p>'}</div>
+ <div class="card"><h2>Family contact and consent</h2><div class="row"><div><label for="fn">Name</label><input id="fn" value="${esc(S.fam.n)}" onchange="S.fam.n=this.value;save()"></div>
+ <div><label for="fp">Phone for SMS</label><input id="fp" value="${esc(S.fam.p)}" onchange="S.fam.p=this.value;save()"></div></div>
+ <label style="font-weight:400"><input type="checkbox" style="width:auto" ${S.consent?'checked':''} onchange="S.consent=this.checked;save()"> The elder has agreed to share dose alerts and an adherence report with family and doctor.</label></div>`;
+ const q=due(),nx=S.meds.filter(m=>status(m)!=='expired').flatMap(m=>m.times.map(t=>m.name+' at '+t))[0];
+ $('#eld').innerHTML=`<div class="card elder">${q.length?`<h3>Time for ${esc(q[0].name)}</h3><p>${q[0].st==='missed'?'You are late. Please take it now.':'Please take your medicine.'}</p>
+ <button class="big pulse" onclick="take('${q[0].key}','tap')">I TOOK IT</button><p><button class="b" onclick="speak('${esc(q[0].name)}')">Hear reminder (Hindi)</button></p>`
+ :`<h3>All done for now</h3><p>${nx?'Next: '+esc(nx):'No medicines added.'}</p><button class="big wait" disabled>Nothing to take</button>`}<p style="margin-top:22px"><button class="b" onclick="go('emg')">Emergency info</button></p></div>`;
+ $('#box').innerHTML=`<div class="card"><h2>Smart pill box (ESP32, lid sensor, buzzer)</h2>
+ <div class="box"><div class="lid ${S.lid?'open':''}"></div><div class="tray"><i></i><i></i><i></i><i></i></div></div>
+ <p style="text-align:center"><span class="led ${q.length?'on':''}"></span>${q.length?'Buzzer on: '+esc(q[0].name)+' is due':'Buzzer off'}</p>
+ <p style="text-align:center"><button class="b p" onclick="lid()">${S.lid?'Close lid':'Open lid'}</button></p>
+ <p style="color:var(--mut)">Opening the lid while a dose is due marks it as likely taken. The real box sends this to the backend:</p>
+ <code>POST /api/lid {"device":"box-01","event":"open","t":${now()}}</code>
+ <p style="color:var(--mut)">A lid opening means likely taken, not certainly taken.</p></div>`;rEmg()}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function del(id){S.meds=S.meds.filter(m=>m.id!==id);save();render()}
+function setLeft(id,v){const m=S.meds.find(m=>m.id===id);if(m){m.left=v===''?null:Math.max(0,+v);tick();save();render()}}
+const PF=[['n','Name'],['age','Age'],['blood','Blood group'],['all','Allergies'],['cond','Medical conditions'],['doc','Doctor and phone'],['emg','Emergency contact and phone'],['notes','Other notes']];
+function rEmg(f){const el=$('#emg');if(!f&&el.contains(document.activeElement))return;
+ const op=el.querySelector('details')&&el.querySelector('details').open;
+ const p=S.prof,ms=S.meds.filter(m=>status(m)!=='expired');
+ const sum='MEDTRACK EMERGENCY CARD\nName: '+p.n+', age '+p.age+'\nBlood group: '+p.blood+'\nAllergies: '+p.all+'\nConditions: '+p.cond+'\nMedicines: '+ms.map(m=>m.name).join('; ')+'\nDoctor: '+p.doc+'\nContact: '+p.emg+(p.notes?'\nNotes: '+p.notes:'');
+ const row=(a,b)=>`<div style="padding:8px 0;border-bottom:1px solid var(--line)"><small style="color:var(--mut)">${a}</small><div style="font-size:22px;font-weight:700">${esc(b)||'Not filled in'}</div></div>`;
+ el.innerHTML=`<div class="card" style="border:2px solid var(--red)"><h2 style="color:var(--red)">Emergency card</h2>${row('Name and age',p.n+', '+p.age)}${row('Blood group',p.blood)}${row('Allergies',p.all)}${row('Medical conditions',p.cond)}${row('Current medicines',ms.map(m=>m.name+' ('+m.times.join(', ')+')').join('; '))}${row('Doctor',p.doc)}${row('Call first',p.emg)}${p.notes?row('Notes',p.notes):''}<p style="color:var(--mut);margin-bottom:0">Entered by family, so please verify. Shown only with the elder’s consent.</p></div>
+ <div class="card"><h2>QR code for the pill box or phone</h2><div id="qr" style="background:#fff;padding:8px;display:inline-block"></div><p style="color:var(--mut)">Any phone camera can scan this and read the card, even without internet.</p></div>
+ <details class="card" ${op?'open':''}><summary style="cursor:pointer;font-weight:600">Edit details (family fills this in)</summary>${PF.map(([k,l])=>`<label for="pf${k}">${l}</label><input id="pf${k}" value="${esc(p[k]||'')}" onchange="S.prof.${k}=this.value;save()">`).join('')}<p><button class="b p" onclick="rEmg(true)">Save and update card</button></p></details>`;
+ try{new QRCode($('#qr'),{text:sum,width:170,height:170,correctLevel:QRCode.CorrectLevel.L})}catch(e){$('#qr').textContent='The QR code could not be made here.'}}
+function speak(n){try{const u=new SpeechSynthesisUtterance('दवा लेने का समय हो गया है: '+n);u.lang='hi-IN';speechSynthesis.speak(u)}catch(e){}}
+function theme(){const r=document.documentElement,d=getComputedStyle(r).colorScheme==='dark';r.dataset.theme=d?'light':'dark'}
+function go(t){document.querySelectorAll('.tab').forEach(e=>e.classList.toggle('on',e.id===t));document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.t===t))}
+document.querySelectorAll('#nav button').forEach(b=>b.onclick=()=>go(b.dataset.t));
+tick();render();setInterval(()=>{tick();save();render()},15000);setInterval(()=>{$('#clock').textContent=new Date(now()).toLocaleString([], {weekday:'short',hour:'2-digit',minute:'2-digit'})},1000);
+</script></body></html>
