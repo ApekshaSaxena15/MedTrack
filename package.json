@@ -1,0 +1,11 @@
+{
+  "name": "medtrack-backend",
+  "version": "0.1.0",
+  "description": "Medicine expiry and missed-dose tracker backend (hackathon). Zero dependencies, needs Node 18+.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "seed": "node seed.js",
+    "test": "node --test"
+  }
+}
