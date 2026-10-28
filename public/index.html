@@ -1,0 +1,361 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MedTrack</title>
+<style>
+  :root {
+    --bg: #f4f6f8; --card: #ffffff; --ink: #15222e; --mut: #5a6b7b; --line: #e2e8ee;
+    --brand: #0a58d6; --brand-ink: #ffffff;
+    --ok: #17703f; --ok-bg: #e2f4ea;
+    --warn: #8a5200; --warn-bg: #fff0cf;
+    --bad: #a6231b; --bad-bg: #fde6e3;
+    --info: #1d4f91; --info-bg: #e5eefb;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  header { position: sticky; top: 0; z-index: 5; background: var(--card); border-bottom: 1px solid var(--line); }
+  .bar { max-width: 960px; margin: 0 auto; padding: 10px 16px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  .logo { font-weight: 800; font-size: 20px; letter-spacing: -.3px; }
+  .logo span { color: var(--brand); }
+  .spacer { flex: 1; }
+  select, input, textarea, button { font: inherit; }
+  select, input, textarea { border: 1px solid #c9d3dd; border-radius: 8px; padding: 8px 10px; background: #fff; color: var(--ink); min-width: 0; }
+  textarea { width: 100%; resize: vertical; }
+  .seg { display: inline-flex; border: 1px solid #c9d3dd; border-radius: 10px; overflow: hidden; }
+  .seg button { border: 0; background: #fff; padding: 8px 14px; cursor: pointer; color: var(--mut); font-weight: 600; }
+  .seg button.on { background: var(--brand); color: var(--brand-ink); }
+  main { max-width: 960px; margin: 0 auto; padding: 16px; display: grid; gap: 16px; }
+  .grid { display: grid; gap: 16px; grid-template-columns: 1fr; }
+  @media (min-width: 800px) { .grid.two { grid-template-columns: 1fr 1fr; } }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px; }
+  h2 { margin: 0 0 10px; font-size: 15px; text-transform: uppercase; letter-spacing: .6px; color: var(--mut); }
+  .banner { border-radius: 14px; padding: 16px 18px; font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+  .banner small { display: block; font-weight: 500; font-size: 14px; opacity: .85; }
+  .banner.ok { background: var(--ok-bg); color: var(--ok); }
+  .banner.warn { background: var(--warn-bg); color: var(--warn); }
+  .banner.bad { background: var(--bad-bg); color: var(--bad); }
+  .row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-top: 1px solid var(--line); }
+  .row:first-of-type { border-top: 0; }
+  .row .grow { flex: 1; min-width: 0; }
+  .row .sub { color: var(--mut); font-size: 13px; }
+  .chip { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 13px; font-weight: 700; white-space: nowrap; }
+  .chip.ok { background: var(--ok-bg); color: var(--ok); }
+  .chip.warn { background: var(--warn-bg); color: var(--warn); }
+  .chip.bad { background: var(--bad-bg); color: var(--bad); }
+  .chip.info { background: var(--info-bg); color: var(--info); }
+  .alert { border-left: 5px solid var(--info); background: #f8fafc; padding: 10px 12px; border-radius: 8px; margin-bottom: 8px; }
+  .alert.missed, .alert.expired { border-color: var(--bad); background: var(--bad-bg); }
+  .alert.expiring, .alert.late { border-color: #d98a00; background: var(--warn-bg); }
+  .alert b { display: block; }
+  .alert .sub { color: var(--mut); font-size: 13px; }
+  .big { font-size: 56px; font-weight: 800; line-height: 1; }
+  .stats { display: flex; gap: 18px; flex-wrap: wrap; align-items: end; }
+  .stats div small { display: block; color: var(--mut); font-size: 13px; }
+  .stats div b { font-size: 22px; }
+  button.primary { background: var(--brand); color: var(--brand-ink); border: 0; border-radius: 10px; padding: 10px 16px; font-weight: 700; cursor: pointer; }
+  button.ghost { background: #fff; color: var(--ink); border: 1px solid #c9d3dd; border-radius: 10px; padding: 9px 14px; font-weight: 600; cursor: pointer; }
+  button:disabled { opacity: .5; cursor: default; }
+  label { display: block; font-size: 13px; font-weight: 600; color: var(--mut); margin: 10px 0 4px; }
+  .fields { display: grid; gap: 10px; grid-template-columns: 1fr 1fr; }
+  .fields > div { min-width: 0; }
+  .fields input { width: 100%; }
+  .note { font-size: 13px; padding: 8px 10px; border-radius: 8px; margin-top: 8px; background: var(--info-bg); color: var(--info); }
+  .note.warn { background: var(--warn-bg); color: var(--warn); }
+  .muted { color: var(--mut); }
+  .empty { color: var(--mut); padding: 6px 0; }
+  details summary { cursor: pointer; font-weight: 700; color: var(--mut); text-transform: uppercase; letter-spacing: .6px; font-size: 15px; }
+  /* elder screen */
+  .elder { text-align: center; }
+  .elder .time { font-size: 20px; color: var(--mut); }
+  .elder .due { background: var(--card); border: 3px solid var(--brand); border-radius: 22px; padding: 28px 18px; margin-bottom: 16px; }
+  .elder .due h1 { font-size: clamp(30px, 8vw, 46px); margin: 0 0 6px; }
+  .elder .due p { font-size: 22px; margin: 0 0 20px; color: var(--mut); }
+  .elder .took { width: 100%; font-size: clamp(30px, 8vw, 44px); font-weight: 800; padding: 26px 10px; border-radius: 18px; border: 0; background: var(--ok); color: #fff; cursor: pointer; }
+  .elder .took:active { transform: scale(.98); }
+  .elder .warnbox { background: var(--bad-bg); color: var(--bad); font-size: 22px; font-weight: 700; border-radius: 12px; padding: 14px; margin-bottom: 18px; }
+  .elder .calm { background: var(--ok-bg); color: var(--ok); border-radius: 22px; padding: 40px 18px; }
+  .elder .calm h1 { font-size: clamp(30px, 8vw, 44px); margin: 0 0 8px; }
+  .elder .calm p { font-size: 22px; margin: 0; }
+  #toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); background: #15222e; color: #fff; padding: 10px 16px; border-radius: 10px; opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 10; max-width: 90vw; }
+  #toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <div class="logo">Med<span>Track</span></div>
+    <div class="seg" role="tablist" aria-label="Screen">
+      <button id="tabFamily" role="tab">Family</button>
+      <button id="tabElder" role="tab">Elder</button>
+    </div>
+    <div class="spacer"></div>
+    <label for="elderSel" style="margin:0">For</label>
+    <select id="elderSel" aria-label="Elder"></select>
+  </div>
+</header>
+
+<main id="app"></main>
+<div id="toast" role="status"></div>
+
+<script>
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const pad = (n) => String(n).padStart(2, "0");
+const dkey = (t) => `${t.getFullYear()}-${pad(t.getMonth() + 1)}-${pad(t.getDate())}`;
+const hhmm = (iso) => new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+async function api(method, path, body) {
+  const res = await fetch(path, { method, headers: { "Content-Type": "application/json" }, body: body ? JSON.stringify(body) : undefined });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(json.error || `Request failed (${res.status})`);
+  return json;
+}
+
+function toast(msg) {
+  const t = $("#toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(toast.t);
+  toast.t = setTimeout(() => t.classList.remove("show"), 3200);
+}
+
+// remembered view / elder (per browser, optional)
+const store = {
+  get(k, d) { try { return localStorage.getItem(k) ?? d; } catch { return d; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch {} },
+};
+
+const S = { view: store.get("view", "family"), elderId: store.get("elderId", ""), users: [], data: null, draft: null, busy: false };
+
+// ---------- loading ----------
+async function loadUsers() {
+  S.users = await api("GET", "/users");
+  const elders = S.users.filter((u) => u.role === "elder");
+  if (!elders.find((e) => e.id === S.elderId)) S.elderId = elders[0]?.id || "";
+  const sel = $("#elderSel");
+  sel.innerHTML = elders.map((e) => `<option value="${esc(e.id)}"${e.id === S.elderId ? " selected" : ""}>${esc(e.name)}</option>`).join("");
+  sel.style.display = elders.length ? "" : "none";
+}
+
+async function refresh() {
+  try {
+    await loadUsers();
+    if (!S.elderId) { S.data = null; return render(); }
+    const id = encodeURIComponent(S.elderId);
+    const families = S.users.filter((u) => u.role === "family" && u.linkedElderId === S.elderId);
+    const [medicines, schedules, doses, adherence, devices, alertLists] = await Promise.all([
+      api("GET", `/medicines?elderId=${id}`),
+      api("GET", `/schedules?elderId=${id}`),
+      api("GET", `/doses?elderId=${id}`),
+      api("GET", `/adherence?elderId=${id}&days=7`),
+      api("GET", `/devices?elderId=${id}`),
+      Promise.all(families.map((f) => api("GET", `/alerts?userId=${encodeURIComponent(f.id)}`))),
+    ]);
+    const alerts = alertLists.flat().sort((a, b) => new Date(b.at) - new Date(a.at));
+    S.data = { medicines, schedules, doses, adherence, devices, alerts, families };
+    render();
+  } catch (e) {
+    $("#app").innerHTML = `<div class="banner bad">Can't reach the server<small>${esc(e.message)}. Is it running?</small></div>`;
+  }
+}
+
+// ---------- helpers ----------
+const doseChip = (s) => ({
+  pending: ["warn", "Due now"], taken: ["ok", "Taken"], taken_late: ["info", "Taken late"], missed: ["bad", "Missed"],
+}[s] || ["info", s]);
+const expiryChip = (m) => m.status === "EXPIRED" ? ["bad", "Expired"] : m.status === "EXPIRING_SOON" ? ["warn", `Expires in ${m.days} d`] : m.status === "OK" ? ["ok", "OK"] : ["info", "No expiry"];
+
+function nextDose({ schedules, doses }) {
+  const now = new Date();
+  const done = new Set(doses.filter((d) => d.dateKey === dkey(now)).map((d) => d.scheduleId));
+  const at = (s, addDays) => { const [h, m] = s.time.split(":").map(Number); return new Date(now.getFullYear(), now.getMonth(), now.getDate() + addDays, h, m); };
+  const active = schedules.filter((s) => s.active !== false);
+  let c = active.filter((s) => (!s.daysOfWeek?.length || s.daysOfWeek.includes(now.getDay())) && at(s, 0) > now && !done.has(s.id)).map((s) => ({ s, due: at(s, 0) }));
+  if (!c.length) c = active.map((s) => ({ s, due: at(s, 1) }));
+  c.sort((a, b) => a.due - b.due);
+  return c[0] || null;
+}
+
+// ---------- views ----------
+function renderSetup() {
+  $("#app").innerHTML = `
+    <div class="card">
+      <h2>Set up</h2>
+      <p class="muted" style="margin-top:0">No elder yet. Create one with a family contact and a paired pill box (or run <code>node seed.js</code>).</p>
+      <div class="fields">
+        <div><label for="sEl">Elder's name</label><input id="sEl" placeholder="Dadi"></div>
+        <div><label for="sFam">Family member</label><input id="sFam" placeholder="Ravi"></div>
+        <div><label for="sPh">Family phone (for SMS)</label><input id="sPh" placeholder="+91..."></div>
+        <div><label for="sDev">Pill box ID</label><input id="sDev" value="box-1"></div>
+      </div>
+      <p><button class="primary" id="sGo">Create</button></p>
+    </div>`;
+  $("#sGo").onclick = async () => {
+    try {
+      const name = $("#sEl").value.trim(), fam = $("#sFam").value.trim();
+      if (!name || !fam) return toast("Enter both names");
+      const el = await api("POST", "/users", { name, role: "elder" });
+      await api("POST", "/users", { name: fam, role: "family", phone: $("#sPh").value.trim() || undefined, linkedElderId: el.id });
+      if ($("#sDev").value.trim()) await api("POST", "/devices", { deviceId: $("#sDev").value.trim(), elderId: el.id });
+      S.elderId = el.id; store.set("elderId", el.id);
+      refresh();
+    } catch (e) { toast(e.message); }
+  };
+}
+
+function renderFamily() {
+  const { medicines, doses, adherence, alerts, devices } = S.data;
+  const elder = S.users.find((u) => u.id === S.elderId);
+  const today = dkey(new Date());
+  const todays = doses.filter((d) => d.dateKey === today).sort((a, b) => new Date(a.dueAt) - new Date(b.dueAt));
+  const missedToday = todays.filter((d) => d.status === "missed");
+  const pending = todays.filter((d) => d.status === "pending");
+  const expired = medicines.filter((m) => m.status === "EXPIRED");
+  const soon = medicines.filter((m) => m.status === "EXPIRING_SOON");
+
+  let banner;
+  if (missedToday.length) banner = `<div class="banner bad"><div>${esc(elder.name)} missed ${missedToday.length} dose${missedToday.length > 1 ? "s" : ""} today<small>${esc(missedToday.map((d) => `${d.medicineName} (${hhmm(d.dueAt)})`).join(", "))}</small></div></div>`;
+  else if (pending.length) banner = `<div class="banner warn"><div>Waiting for ${esc(elder.name)} to take ${esc(pending.map((d) => d.medicineName).join(", "))}<small>You will be alerted if it is not taken in time.</small></div></div>`;
+  else if (expired.length) banner = `<div class="banner bad"><div>${esc(expired.map((m) => m.name).join(", "))} ${expired.length > 1 ? "have" : "has"} expired<small>Replace and dispose of it safely.</small></div></div>`;
+  else banner = `<div class="banner ok"><div>All on track today<small>${soon.length ? esc(soon.map((m) => m.name).join(", ")) + " expiring soon." : "No missed doses or expiring medicines."}</small></div></div>`;
+
+  const doseRows = todays.length ? todays.map((d) => { const [c, l] = doseChip(d.status); return `
+      <div class="row"><div class="grow"><b>${esc(d.medicineName)}</b><div class="sub">Due ${hhmm(d.dueAt)}${d.takenAt ? ` · taken ${hhmm(d.takenAt)} via ${d.source === "lid" ? "pill box" : "app"}` : ""}</div></div><span class="chip ${c}">${l}</span></div>`; }).join("")
+    : `<div class="empty">No doses yet today.</div>`;
+
+  const medRows = medicines.length ? medicines.map((m) => { const [c, l] = expiryChip(m); return `
+      <div class="row"><div class="grow"><b>${esc(m.name)}</b><div class="sub">${m.expiryDate ? "Expiry " + esc(m.expiryDate) : "No expiry date"}</div></div><span class="chip ${c}">${l}</span></div>`; }).join("")
+    : `<div class="empty">No medicines yet. Add one below.</div>`;
+
+  const alertRows = alerts.length ? alerts.slice(0, 12).map((a) => `
+      <div class="alert ${esc(a.kind)}"><b>${esc(a.title)}</b>${esc(a.body)}<div class="sub">${new Date(a.at).toLocaleString([], { weekday: "short", hour: "2-digit", minute: "2-digit" })}</div></div>`).join("")
+    : `<div class="empty">No alerts yet.</div>`;
+
+  const pct = adherence.adherencePct;
+  $("#app").innerHTML = `
+    ${banner}
+    <div class="grid two">
+      <div class="card"><h2>Alerts</h2>${alertRows}</div>
+      <div class="grid">
+        <div class="card"><h2>Adherence, last 7 days</h2>
+          <div class="stats"><div class="big">${pct === null ? "–" : pct + "%"}</div>
+            <div><small>On time</small><b>${adherence.onTime}</b></div><div><small>Late</small><b>${adherence.late}</b></div><div><small>Missed</small><b>${adherence.missed}</b></div></div></div>
+        <div class="card"><h2>Today's doses</h2>${doseRows}</div>
+      </div>
+    </div>
+    <div class="grid two">
+      <div class="card"><h2>Medicines</h2>${medRows}</div>
+      <div class="card" id="addCard"></div>
+    </div>
+    <div class="card"><details><summary>Demo tools</summary>
+      <p class="muted">Pretend to be the ESP32 pill box: ${devices.length ? `device <code>${esc(devices[0].deviceId)}</code>` : "no box is paired yet"}.</p>
+      <button class="ghost" id="lidBtn" ${devices.length ? "" : "disabled"}>Simulate lid open</button></details></div>`;
+
+  renderAddForm();
+  $("#lidBtn").onclick = async () => {
+    try {
+      const r = await api("POST", "/lid-event", { deviceId: devices[0].deviceId });
+      toast({ taken: "Lid opened: dose marked taken", taken_late: "Lid opened: marked taken late", no_dose_due: "Lid opened, but no dose was due" }[r.status] || r.status);
+      refresh();
+    } catch (e) { toast(e.message); }
+  };
+}
+
+function renderAddForm() {
+  const d = S.draft || { text: "", name: "", expiry: "", time: "", demo: false, note: null };
+  S.draft = d;
+  $("#addCard").innerHTML = `
+    <h2>Add a medicine</h2>
+    <label for="aText">Scanned text from the strip or box (OCR)</label>
+    <textarea id="aText" rows="2" placeholder="B.No A1234 MFG 08/25 EXP 08/27">${esc(d.text)}</textarea>
+    <p style="margin:8px 0"><button class="ghost" id="aRead">Read expiry date</button></p>
+    ${d.note ? `<div class="note ${d.note.warn ? "warn" : ""}">${esc(d.note.text)}</div>` : ""}
+    <div class="fields">
+      <div><label for="aName">Medicine name</label><input id="aName" value="${esc(d.name)}" placeholder="BP tablet"></div>
+      <div><label for="aExp">Expiry date (confirm)</label><input id="aExp" type="date" value="${esc(d.expiry)}"></div>
+      <div><label for="aTime">Daily dose time</label><input id="aTime" type="time" value="${esc(d.time)}" ${d.demo ? "disabled" : ""}></div>
+      <div><label>&nbsp;</label><label style="display:flex;gap:6px;align-items:center;margin:0;padding-top:8px"><input id="aDemo" type="checkbox" ${d.demo ? "checked" : ""} style="width:auto"> Due in 2 minutes (demo)</label></div>
+    </div>
+    <p><button class="primary" id="aSave">Save medicine</button></p>`;
+
+  const sync = () => { d.text = $("#aText").value; d.name = $("#aName").value; d.expiry = $("#aExp").value; d.time = $("#aTime").value; d.demo = $("#aDemo").checked; };
+  ["#aText", "#aName", "#aExp", "#aTime"].forEach((s) => ($(s).oninput = sync));
+  $("#aDemo").onchange = () => { sync(); renderAddForm(); };
+
+  $("#aRead").onclick = async () => {
+    sync();
+    if (!d.text.trim()) return toast("Paste the scanned text first");
+    try {
+      const r = await api("POST", "/expiry/parse", { text: d.text });
+      if (r.found) {
+        d.expiry = r.expiryDate;
+        d.note = { text: `Read "${r.matchedText}" as ${r.expiryDate}. ${r.needsConfirm ? "Low confidence, please check it against the strip." : "Please confirm it matches the strip."}`, warn: r.needsConfirm };
+      } else d.note = { text: "Couldn't find an expiry date. Enter it manually.", warn: true };
+      renderAddForm();
+    } catch (e) { toast(e.message); }
+  };
+
+  $("#aSave").onclick = async () => {
+    sync();
+    if (!d.name.trim()) return toast("Enter the medicine name");
+    if (!d.demo && !d.time) return toast("Choose a dose time");
+    try {
+      const m = await api("POST", "/medicines", { elderId: S.elderId, name: d.name.trim(), expiryDate: d.expiry || undefined });
+      await api("POST", "/schedules", { medicineId: m.id, ...(d.demo ? { inMinutes: 2 } : { time: d.time }) });
+      S.draft = null;
+      document.activeElement?.blur?.();
+      toast(`${m.name} added`);
+      refresh();
+    } catch (e) { toast(e.message); }
+  };
+}
+
+function renderElder() {
+  const { doses, medicines } = S.data;
+  const elder = S.users.find((u) => u.id === S.elderId);
+  const pending = doses.filter((d) => d.status === "pending").sort((a, b) => new Date(a.dueAt) - new Date(b.dueAt));
+  const med = (id) => medicines.find((m) => m.id === id);
+  const clock = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+  let body;
+  if (pending.length) {
+    body = pending.map((d) => {
+      const m = med(d.medicineId);
+      const bad = m?.status === "EXPIRED";
+      return `<div class="due"><h1>Time for ${esc(d.medicineName)}</h1><p>It was due at ${hhmm(d.dueAt)}</p>
+        ${bad ? `<div class="warnbox">This medicine has expired. Please ask your family before taking it.</div>` : ""}
+        <button class="took" data-id="${esc(d.id)}">I TOOK IT</button></div>`;
+    }).join("");
+  } else {
+    const n = nextDose(S.data);
+    const m = n && med(n.s.medicineId);
+    body = `<div class="calm"><h1>All done for now ✓</h1><p>${n ? `Next: ${esc(m?.name || "medicine")} at ${hhmm(n.due)}` : "No medicines scheduled"}</p></div>`;
+  }
+  $("#app").innerHTML = `<div class="elder"><div class="time">Hello ${esc(elder.name)} · ${clock}</div><div style="height:12px"></div>${body}</div>`;
+  document.querySelectorAll(".took").forEach((b) => (b.onclick = async () => {
+    b.disabled = true;
+    try { await api("POST", `/dose/${encodeURIComponent(b.dataset.id)}/taken`); toast("Thank you! Your family will know."); refresh(); }
+    catch (e) { toast(e.message); b.disabled = false; }
+  }));
+}
+
+function render() {
+  $("#tabFamily").classList.toggle("on", S.view === "family");
+  $("#tabElder").classList.toggle("on", S.view === "elder");
+  if (!S.data) return renderSetup();
+  // don't wipe the add-medicine form while someone is typing in it
+  if (S.view === "family" && document.activeElement?.matches?.("#addCard input, #addCard textarea")) return;
+  S.view === "elder" ? renderElder() : renderFamily();
+}
+
+$("#tabFamily").onclick = () => { S.view = "family"; store.set("view", "family"); render(); };
+$("#tabElder").onclick = () => { S.view = "elder"; store.set("view", "elder"); render(); };
+$("#elderSel").onchange = (e) => { S.elderId = e.target.value; store.set("elderId", S.elderId); S.draft = null; refresh(); };
+
+refresh();
+setInterval(() => { if (!document.hidden) refresh(); }, 4000);
+</script>
+</body>
+</html>
